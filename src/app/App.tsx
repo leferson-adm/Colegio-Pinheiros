@@ -4,14 +4,16 @@ import logoHeaderImg from "../assets/logo-header.png";
 import heroBg from "../assets/hero-bg.jpg";
 import tafImg from "../assets/taf.jpg";
 import ensinoInfantilImg from "../assets/ensino-infantil.jpg";
+import ensinoFundamentalImg from "../assets/ensino-fundamental.jpg";
 import saeLogo from "../assets/sae-logo.png";
 import carousel1 from "../assets/carousel1.jpg";
 import carousel2 from "../assets/carousel2.jpg";
 import carousel3 from "../assets/carousel3.jpg";
 import carousel4 from "../assets/carousel4.jpg";
 import carousel5 from "../assets/carousel5.jpg";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
+  ChevronLeft,
+  ChevronRight,
   Menu,
   X,
   Phone,
@@ -57,13 +59,38 @@ function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [ensinoOpen, setEnsinoOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
   const dropRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 20);
+
+      if (mobileOpen) {
+        setVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      if (currentScrollY <= 10) {
+        setVisible(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 70) {
+        // Rolando para baixo: sobe a barra (esconde)
+        setVisible(false);
+        setEnsinoOpen(false);
+      } else if (currentScrollY < lastScrollY.current) {
+        // Rolando para cima: desce a barra (mostra)
+        setVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [mobileOpen]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -83,8 +110,8 @@ function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-sm"
-        }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform ${visible ? "translate-y-0" : "-translate-y-full"
+        } ${scrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-sm"}`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
@@ -98,12 +125,12 @@ function Header() {
               alt="Centro Educacional Pinheiros"
               className="h-10 sm:h-11 w-auto object-contain"
             />
-            <div className="hidden sm:block">
-              <span className="font-heading font-black text-green-700 text-base leading-tight block">
-                Centro Educacional
-              </span>
-              <span className="font-heading font-black text-amber-600 text-base leading-tight block">
-                Pinheiros
+            <div className="flex items-center">
+              <span
+                style={{ color: "#004aad" }}
+                className="font-heading font-black text-2xl sm:text-3xl tracking-wider select-none leading-none"
+              >
+                C.E.P
               </span>
             </div>
           </button>
@@ -311,26 +338,29 @@ function Hero() {
 // ─── Stats Bar ────────────────────────────────────────────────────────────────
 
 function StatsBar() {
-  const stats = [
-    { label: "Anos de Tradição", value: "30+" },
-    { label: "Ano de Fundação", value: "1993" },
-    { label: "Segmentos de Ensino", value: "3" },
-    { label: "Sistema Pedagógico", value: "SAE Digital" },
+  const segments = [
+    { label: "ED. INFANTIL", href: "#ensino" },
+    { label: "ENS. FUNDAMENTAL I E II", href: "#ensino" },
+    { label: "ENS. MÉDIO", href: "#ensino" },
+    { label: "CURSOS EXTRAS", href: "#cursos" },
+    { label: "PREPARATÓRIO", href: "#cursos" },
   ];
 
   return (
-    <section className="bg-green-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x-0 md:divide-x divide-green-600">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center px-4">
-              <div className="text-3xl md:text-4xl font-heading font-black text-white mb-1">
-                {stat.value}
-              </div>
-              <div className="text-green-300 text-sm font-medium">
-                {stat.label}
-              </div>
-            </div>
+    <section className="bg-green-700 border-y border-green-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 divide-y-0 md:divide-x divide-green-600 gap-y-4 md:gap-y-0">
+          {segments.map((seg, idx) => (
+            <a
+              key={seg.label}
+              href={seg.href}
+              className={`flex items-center justify-center text-center px-3 lg:px-4 py-2 transition-all hover:bg-green-800/40 rounded-xl group ${idx === 4 ? "col-span-2 md:col-span-1" : ""
+                }`}
+            >
+              <span className="font-heading font-black text-white text-sm sm:text-base lg:text-lg tracking-wider transition-all duration-200 group-hover:scale-105 group-hover:text-green-200">
+                {seg.label}
+              </span>
+            </a>
           ))}
         </div>
       </div>
@@ -422,13 +452,12 @@ function Sobre() {
           <div className="relative order-2 lg:order-1">
             <SobreCarousel />
             {/* Floating accent */}
-            <div className="absolute -bottom-5 -right-5 bg-amber-600 text-white rounded-2xl p-6 shadow-xl">
-              <div className="text-4xl font-heading font-black leading-none">
-                1993
-              </div>
-              <div className="text-amber-200 text-sm font-medium mt-1">
-                Ano de fundação
-              </div>
+            <div className="absolute -bottom-5 -right-5 bg-amber-600 rounded-2xl p-3 sm:p-4 shadow-2xl flex items-center justify-center">
+              <img
+                src={logoImg}
+                alt="Colégio Pinheiros - Desde 1993"
+                className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
+              />
             </div>
             {/* Decorative element */}
             <div className="absolute -top-5 -left-5 w-20 h-20 bg-green-100 rounded-2xl -z-10" />
@@ -518,9 +547,8 @@ function Ensino() {
     {
       label: "Ensino Fundamental",
       emoji: "📚",
-      image:
-        "https://images.unsplash.com/photo-1636202339022-7d67f7447e3a?w=700&h=500&fit=crop&auto=format",
-      alt: "Alunos do Ensino Fundamental em sala de aula",
+      image: ensinoFundamentalImg,
+      alt: "Alunos do Ensino Fundamental em atividade prática no laboratório",
       description:
         "No Ensino Fundamental, consolidamos o aprendizado com metodologias ativas e conteúdo alinhado à Base Nacional Curricular Comum (BNCC). Valorizamos o raciocínio crítico, a criatividade e a autonomia dos alunos em cada etapa.",
       highlights: [
@@ -579,8 +607,8 @@ function Ensino() {
               key={seg.label}
               onClick={() => setActiveTab(i)}
               className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm transition-all ${activeTab === i
-                  ? "bg-green-700 text-white shadow-md scale-105"
-                  : "bg-white text-gray-600 hover:text-green-700 hover:bg-green-50 border border-gray-200 hover:border-green-200"
+                ? "bg-green-700 text-white shadow-md scale-105"
+                : "bg-white text-gray-600 hover:text-green-700 hover:bg-green-50 border border-gray-200 hover:border-green-200"
                 }`}
             >
               <span>{seg.emoji}</span>
@@ -768,8 +796,8 @@ function SAEDigital() {
           </div>
           <div className="flex-1 text-center md:text-left">
             <h3 className="text-2xl font-heading font-black text-gray-900 mb-2">
-              Sistema de Ensino{" "}
-              <span className="text-green-700">SAE Digital</span>
+              <span style={{ color: "#1c9beb" }}>SAE</span>{" "}
+              <span style={{ color: "#741e86" }}>Digital</span>
             </h3>
             <p className="text-gray-600 max-w-2xl text-[15px] leading-relaxed">
               Material pedagógico de ponta com plataforma tecnológica integrada
@@ -778,28 +806,44 @@ function SAEDigital() {
               acompanhamento familiar.
             </p>
           </div>
-          <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
+          <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3.5">
             <a
               href="https://pinheiros.alunos.digital/login"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-center px-5 py-3 bg-white rounded-xl border border-green-200 shadow-sm hover:border-green-400 hover:shadow-md transition-all cursor-pointer block"
+              className="group portal-btn-float-1 relative overflow-hidden text-center px-6 py-3.5 bg-white rounded-2xl border-2 border-green-200/90 shadow-sm hover:border-green-500 hover:shadow-xl hover:shadow-green-700/15 transition-all duration-300 cursor-pointer block hover:-translate-y-1.5 active:scale-95"
             >
-              <div className="text-xs text-gray-500 font-medium mb-0.5">
+              <div className="portal-shimmer" />
+              <div className="text-xs text-gray-500 font-medium mb-1 group-hover:text-green-800 transition-colors">
                 Portal do Aluno
               </div>
-              <div className="text-green-700 font-bold text-sm">Disponível</div>
+              <div className="flex items-center justify-center gap-1.5 text-green-700 font-bold text-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Disponível</span>
+                <ArrowRight className="w-3.5 h-3.5 text-green-600 transition-transform duration-300 group-hover:translate-x-1" />
+              </div>
             </a>
             <a
               href="https://pinheiros.professores.digital/login"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-center px-5 py-3 bg-white rounded-xl border border-green-200 shadow-sm hover:border-green-400 hover:shadow-md transition-all cursor-pointer block"
+              className="group portal-btn-float-2 relative overflow-hidden text-center px-6 py-3.5 bg-white rounded-2xl border-2 border-green-200/90 shadow-sm hover:border-green-500 hover:shadow-xl hover:shadow-green-700/15 transition-all duration-300 cursor-pointer block hover:-translate-y-1.5 active:scale-95"
             >
-              <div className="text-xs text-gray-500 font-medium mb-0.5">
+              <div className="portal-shimmer" />
+              <div className="text-xs text-gray-500 font-medium mb-1 group-hover:text-green-800 transition-colors">
                 Portal do Professor
               </div>
-              <div className="text-green-700 font-bold text-sm">Disponível</div>
+              <div className="flex items-center justify-center gap-1.5 text-green-700 font-bold text-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Disponível</span>
+                <ArrowRight className="w-3.5 h-3.5 text-green-600 transition-transform duration-300 group-hover:translate-x-1" />
+              </div>
             </a>
           </div>
         </div>
@@ -1157,12 +1201,12 @@ function Footer() {
                 alt="Centro Educacional Pinheiros"
                 className="h-10 md:h-11 w-auto object-contain"
               />
-              <div>
-                <span className="font-heading font-black text-white text-base block leading-tight">
-                  Centro Educacional
-                </span>
-                <span className="font-heading font-black text-amber-400 text-base block leading-tight">
-                  Pinheiros
+              <div className="flex items-center">
+                <span
+                  style={{ color: "#3b82f6" }}
+                  className="font-heading font-black text-2xl md:text-3xl tracking-wider select-none leading-none"
+                >
+                  C.E.P
                 </span>
               </div>
             </div>
@@ -1259,7 +1303,7 @@ function Footer() {
 
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">
-            © 2024 Centro Educacional Pinheiros. Todos os direitos reservados.
+            © 2026 Centro Educacional Pinheiros. Todos os direitos reservados.
           </p>
           <p className="text-gray-600 text-xs">
             Fundado em 1993 · Nova Iguaçu - RJ
